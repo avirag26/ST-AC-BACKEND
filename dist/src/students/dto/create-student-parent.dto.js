@@ -17,6 +17,7 @@ class CreateStudentParentDto {
     parentPhone;
     studentFullName;
     className;
+    batchId;
 }
 exports.CreateStudentParentDto = CreateStudentParentDto;
 __decorate([
@@ -44,4 +45,10 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateStudentParentDto.prototype, "className", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateIf)((_, value) => value !== '' && value != null),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateStudentParentDto.prototype, "batchId", void 0);
 //# sourceMappingURL=create-student-parent.dto.js.map

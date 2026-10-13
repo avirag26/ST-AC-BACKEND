@@ -11,10 +11,13 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
+const attendance_module_1 = require("./attendance/attendance.module");
 const auth_module_1 = require("./auth/auth.module");
 const batches_module_1 = require("./batches/batches.module");
 const catalog_module_1 = require("./catalog/catalog.module");
 const email_module_1 = require("./email/email.module");
+const journey_module_1 = require("./journey/journey.module");
+const parent_module_1 = require("./parent/parent.module");
 const prisma_module_1 = require("./prisma/prisma.module");
 const redis_module_1 = require("./redis/redis.module");
 const storage_module_1 = require("./storage/storage.module");
@@ -38,6 +41,9 @@ exports.AppModule = AppModule = __decorate([
             students_module_1.StudentsModule,
             batches_module_1.BatchesModule,
             sessions_module_1.SessionsModule,
+            attendance_module_1.AttendanceModule,
+            journey_module_1.JourneyModule,
+            parent_module_1.ParentModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

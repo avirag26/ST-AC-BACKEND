@@ -33,6 +33,7 @@ const sessionInclude = {
             id: true,
             name: true,
             classGrade: { select: { id: true, name: true } },
+            _count: { select: { students: true } },
         },
     },
     student: {
@@ -45,6 +46,15 @@ const sessionInclude = {
                     user: { select: { fullName: true, email: true } },
                 },
             },
+        },
+    },
+    journey: {
+        select: {
+            step: true,
+            leftHomeAt: true,
+            reachedAt: true,
+            classStartedAt: true,
+            stoppedAt: true,
         },
     },
 };
@@ -301,6 +311,7 @@ let SessionsService = class SessionsService {
                     id: session.batch.id,
                     name: session.batch.name,
                     className: session.batch.classGrade.name,
+                    studentCount: session.batch._count.students,
                 }
                 : null,
             student: session.student
@@ -310,6 +321,15 @@ let SessionsService = class SessionsService {
                     className: session.student.className,
                     parentName: session.student.parent.user.fullName,
                     parentEmail: session.student.parent.user.email,
+                }
+                : null,
+            journey: session.journey
+                ? {
+                    step: session.journey.step,
+                    leftHomeAt: session.journey.leftHomeAt,
+                    reachedAt: session.journey.reachedAt,
+                    classStartedAt: session.journey.classStartedAt,
+                    stoppedAt: session.journey.stoppedAt,
                 }
                 : null,
         };

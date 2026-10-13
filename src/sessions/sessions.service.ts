@@ -33,6 +33,7 @@ const sessionInclude = {
       id: true,
       name: true,
       classGrade: { select: { id: true, name: true } },
+      _count: { select: { students: true } },
     },
   },
   student: {
@@ -45,6 +46,15 @@ const sessionInclude = {
           user: { select: { fullName: true, email: true } },
         },
       },
+    },
+  },
+  journey: {
+    select: {
+      step: true,
+      leftHomeAt: true,
+      reachedAt: true,
+      classStartedAt: true,
+      stoppedAt: true,
     },
   },
 } as const;
@@ -363,12 +373,20 @@ export class SessionsService {
         id: string;
         name: string;
         classGrade: { id: string; name: string };
+        _count: { students: number };
       } | null;
       student: {
         id: string;
         fullName: string;
         className: string | null;
         parent: { user: { fullName: string; email: string } };
+      } | null;
+      journey?: {
+        step: string;
+        leftHomeAt: Date | null;
+        reachedAt: Date | null;
+        classStartedAt: Date | null;
+        stoppedAt: Date | null;
       } | null;
     },
   ) {
@@ -396,6 +414,7 @@ export class SessionsService {
             id: session.batch.id,
             name: session.batch.name,
             className: session.batch.classGrade.name,
+            studentCount: session.batch._count.students,
           }
         : null,
       student: session.student
@@ -405,6 +424,15 @@ export class SessionsService {
             className: session.student.className,
             parentName: session.student.parent.user.fullName,
             parentEmail: session.student.parent.user.email,
+          }
+        : null,
+      journey: session.journey
+        ? {
+            step: session.journey.step,
+            leftHomeAt: session.journey.leftHomeAt,
+            reachedAt: session.journey.reachedAt,
+            classStartedAt: session.journey.classStartedAt,
+            stoppedAt: session.journey.stoppedAt,
           }
         : null,
     };

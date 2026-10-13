@@ -4,4 +4,5 @@ export declare class CreateStudentParentDto {
     parentPhone?: string;
     studentFullName: string;
     className?: string;
+    batchId?: string;
 }

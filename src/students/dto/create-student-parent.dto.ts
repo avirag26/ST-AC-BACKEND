@@ -26,4 +26,10 @@ export class CreateStudentParentDto {
   @ValidateIf((_, value) => value !== '' && value != null)
   @IsString()
   className?: string;
+
+  /** Optional offline batch to enroll the student into on create. */
+  @IsOptional()
+  @ValidateIf((_, value) => value !== '' && value != null)
+  @IsString()
+  batchId?: string;
 }

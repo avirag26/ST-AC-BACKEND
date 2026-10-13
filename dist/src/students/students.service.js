@@ -82,6 +82,18 @@ let StudentsService = class StudentsService {
                         },
                     },
                 },
+                batches: {
+                    include: {
+                        batch: {
+                            select: {
+                                id: true,
+                                name: true,
+                                isActive: true,
+                                classGrade: { select: { name: true } },
+                            },
+                        },
+                    },
+                },
             },
         });
         return students.map((student) => ({
@@ -89,6 +101,12 @@ let StudentsService = class StudentsService {
             fullName: student.fullName,
             className: student.className,
             createdAt: student.createdAt,
+            batches: student.batches.map((row) => ({
+                id: row.batch.id,
+                name: row.batch.name,
+                isActive: row.batch.isActive,
+                className: row.batch.classGrade.name,
+            })),
             parent: {
                 profileId: student.parent.id,
                 userId: student.parent.user.id,
@@ -104,9 +122,29 @@ let StudentsService = class StudentsService {
         const parentEmail = dto.parentEmail.trim().toLowerCase();
         const parentPhone = normalizePhone(dto.parentPhone);
         const studentFullName = dto.studentFullName.trim();
-        const className = dto.className?.trim() || null;
+        let className = dto.className?.trim() || null;
+        const batchId = dto.batchId?.trim() || null;
         if (parentPhone && !/^\+?[0-9]{10,15}$/.test(parentPhone)) {
             throw new common_1.BadRequestException('Enter a valid parent phone number (10–15 digits), or leave it blank.');
+        }
+        let batch = null;
+        if (batchId) {
+            batch = await this.prisma.batch.findUnique({
+                where: { id: batchId },
+                select: {
+                    id: true,
+                    name: true,
+                    isActive: true,
+                    classGrade: { select: { name: true } },
+                },
+            });
+            if (!batch || !batch.isActive) {
+                throw new common_1.BadRequestException('Select an active batch for this class.');
+            }
+            if (className && className !== batch.classGrade.name) {
+                throw new common_1.BadRequestException(`Batch “${batch.name}” belongs to ${batch.classGrade.name}, not ${className}.`);
+            }
+            className = batch.classGrade.name;
         }
         const existing = await this.prisma.user.findFirst({
             where: {
@@ -121,32 +159,44 @@ let StudentsService = class StudentsService {
         }
         const temporaryPassword = generateTempPassword();
         const passwordHash = await bcrypt.hash(temporaryPassword, 10);
-        const parentUser = await this.prisma.user.create({
-            data: {
-                fullName: dto.parentFullName.trim(),
-                email: parentEmail,
-                phone: parentPhone,
-                passwordHash,
-                role: client_1.UserRole.PARENT,
-                status: client_1.UserStatus.ACTIVE,
-                mustChangePassword: true,
-                parentProfile: {
-                    create: {
-                        phone: parentPhone,
-                        students: {
-                            create: {
-                                fullName: studentFullName,
-                                className,
+        const parentUser = await this.prisma.$transaction(async (tx) => {
+            const created = await tx.user.create({
+                data: {
+                    fullName: dto.parentFullName.trim(),
+                    email: parentEmail,
+                    phone: parentPhone,
+                    passwordHash,
+                    role: client_1.UserRole.PARENT,
+                    status: client_1.UserStatus.ACTIVE,
+                    mustChangePassword: true,
+                    parentProfile: {
+                        create: {
+                            phone: parentPhone,
+                            students: {
+                                create: {
+                                    fullName: studentFullName,
+                                    className,
+                                },
                             },
                         },
                     },
                 },
-            },
-            include: {
-                parentProfile: {
-                    include: { students: true },
+                include: {
+                    parentProfile: {
+                        include: { students: true },
+                    },
                 },
-            },
+            });
+            const student = created.parentProfile?.students[0];
+            if (!created.parentProfile || !student) {
+                throw new common_1.BadRequestException('Could not create parent and student.');
+            }
+            if (batch) {
+                await tx.batchStudent.create({
+                    data: { batchId: batch.id, studentId: student.id },
+                });
+            }
+            return created;
         });
         const student = parentUser.parentProfile?.students[0];
         if (!parentUser.parentProfile || !student) {
@@ -159,7 +209,9 @@ let StudentsService = class StudentsService {
             temporaryPassword,
         });
         return {
-            message: 'Parent account and student created. One email login for the family — share the temporary password until email delivery is configured.',
+            message: batch
+                ? `Parent account and student created, and enrolled in batch “${batch.name}”.`
+                : 'Parent account and student created. One email login for the family — share the temporary password until email delivery is configured.',
             emailDelivery: mail,
             credentials: {
                 email: parentEmail,
@@ -169,6 +221,13 @@ let StudentsService = class StudentsService {
                 id: student.id,
                 fullName: student.fullName,
                 className: student.className,
+                batch: batch
+                    ? {
+                        id: batch.id,
+                        name: batch.name,
+                        className: batch.classGrade.name,
+                    }
+                    : null,
             },
             parent: {
                 profileId: parentUser.parentProfile.id,

@@ -34,6 +34,7 @@ export declare class SessionsController {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -41,6 +42,13 @@ export declare class SessionsController {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }[]>;
     listMine(req: AuthRequest): Promise<{
@@ -66,6 +74,7 @@ export declare class SessionsController {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -73,6 +82,13 @@ export declare class SessionsController {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }[]>;
     listTutors(mode?: string): Promise<{
@@ -106,6 +122,7 @@ export declare class SessionsController {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -113,6 +130,13 @@ export declare class SessionsController {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }>;
     create(dto: CreateSessionDto): Promise<{
@@ -138,6 +162,7 @@ export declare class SessionsController {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -145,6 +170,13 @@ export declare class SessionsController {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }>;
     update(id: string, dto: UpdateSessionDto): Promise<{
@@ -170,6 +202,7 @@ export declare class SessionsController {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -177,6 +210,13 @@ export declare class SessionsController {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }>;
 }

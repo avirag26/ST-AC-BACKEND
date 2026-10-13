@@ -28,6 +28,7 @@ export declare class SessionsService {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -35,6 +36,13 @@ export declare class SessionsService {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }[]>;
     listForTutor(userId: string): Promise<{
@@ -60,6 +68,7 @@ export declare class SessionsService {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -67,6 +76,13 @@ export declare class SessionsService {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }[]>;
     getOne(id: string): Promise<{
@@ -92,6 +108,7 @@ export declare class SessionsService {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -99,6 +116,13 @@ export declare class SessionsService {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }>;
     create(dto: CreateSessionDto): Promise<{
@@ -124,6 +148,7 @@ export declare class SessionsService {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -131,6 +156,13 @@ export declare class SessionsService {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }>;
     update(id: string, dto: UpdateSessionDto): Promise<{
@@ -156,6 +188,7 @@ export declare class SessionsService {
             id: string;
             name: string;
             className: string;
+            studentCount: number;
         } | null;
         student: {
             id: string;
@@ -163,6 +196,13 @@ export declare class SessionsService {
             className: string | null;
             parentName: string;
             parentEmail: string;
+        } | null;
+        journey: {
+            step: string;
+            leftHomeAt: Date | null;
+            reachedAt: Date | null;
+            classStartedAt: Date | null;
+            stoppedAt: Date | null;
         } | null;
     }>;
     listTutors(mode: SessionMode): Promise<{

@@ -40,6 +40,25 @@ enum SessionStatus {
   COMPLETED
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+}
+
+/// Home-tutor online session progress
+enum JourneyStep {
+  NOT_STARTED
+  LEFT_HOME
+  REACHED
+  CLASS_STARTED
+  STOPPED
+}
+
+enum JourneyEventKind {
+  CHECKPOINT
+  LIVE_PING
+}
+
 model User {
   id               String          @id @default(cuid())
   phone            String?         @unique
@@ -122,11 +141,12 @@ model Student {
   user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   parentId  String
   parent    ParentProfile  @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  className String?
-  batches   BatchStudent[]
-  sessions  Session[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  className   String?
+  batches     BatchStudent[]
+  sessions    Session[]
+  attendance  Attendance[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([parentId])
 }
@@ -177,6 +197,9 @@ model Session {
   batch          Batch?        @relation(fields: [batchId], references: [id], onDelete: SetNull)
   studentId      String?
   student        Student?      @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  attendance     Attendance[]
+  journey        SessionJourney?
+  journeyEvents  JourneyLocationEvent[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -185,4 +208,61 @@ model Session {
   @@index([studentId])
   @@index([startsAt])
   @@index([mode, status])
+}
+
+/// Home tutor class journey: leave home → reach → start → stop
+model SessionJourney {
+  id               String      @id @default(cuid())
+  sessionId        String      @unique
+  session          Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  step             JourneyStep @default(NOT_STARTED)
+  leftHomeAt       DateTime?
+  leftHomeLat      Float?
+  leftHomeLng      Float?
+  reachedAt        DateTime?
+  reachedLat       Float?
+  reachedLng       Float?
+  classStartedAt   DateTime?
+  classStartedLat  Float?
+  classStartedLng  Float?
+  stoppedAt        DateTime?
+  stoppedLat       Float?
+  stoppedLng       Float?
+  events           JourneyLocationEvent[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+/// Stored journey GPS trail (checkpoints + live pings) for CEO history
+model JourneyLocationEvent {
+  id         String           @id @default(cuid())
+  sessionId  String
+  session    Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  journeyId  String?
+  journey    SessionJourney?  @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  kind       JourneyEventKind
+  step       JourneyStep
+  lat        Float?
+  lng        Float?
+  recordedAt DateTime         @default(now())
+
+  @@index([sessionId, recordedAt])
+  @@index([journeyId])
+  @@index([kind])
+}
+
+/// Per-student mark for an offline session. Unmarked = Absent for parent view.
+model Attendance {
+  id             String           @id @default(cuid())
+  sessionId      String
+  session        Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status         AttendanceStatus
+  markedByUserId String?
+  markedAt       DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
 }

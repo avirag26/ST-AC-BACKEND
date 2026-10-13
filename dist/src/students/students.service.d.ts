@@ -10,6 +10,12 @@ export declare class StudentsService {
         fullName: string;
         className: string | null;
         createdAt: Date;
+        batches: {
+            id: string;
+            name: string;
+            isActive: boolean;
+            className: string;
+        }[];
         parent: {
             profileId: string;
             userId: string;
@@ -34,6 +40,11 @@ export declare class StudentsService {
             id: string;
             fullName: string;
             className: string | null;
+            batch: {
+                id: string;
+                name: string;
+                className: string;
+            } | null;
         };
         parent: {
             profileId: string;

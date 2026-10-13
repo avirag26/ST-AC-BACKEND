@@ -11,6 +11,7 @@ import Redis from 'ioredis';
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
   private client!: Redis;
+  private connectPromise: Promise<void> | null = null;
 
   constructor(private readonly config: ConfigService) {}
 
@@ -20,7 +21,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       port: Number(this.config.get<string>('REDIS_PORT', '6379')),
       password: this.config.get<string>('REDIS_PASSWORD') || undefined,
       lazyConnect: true,
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
     });
 
     this.client.on('error', (err) => {
@@ -30,7 +32,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy() {
     if (this.client) {
-      await this.client.quit();
+      try {
+        await this.client.quit();
+      } catch {
+        this.client.disconnect();
+      }
     }
   }
 
@@ -38,19 +44,88 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.client;
   }
 
-  async get(key: string): Promise<string | null> {
-    return this.client.get(key);
+  private async ensureConnected(): Promise<boolean> {
+    if (!this.client) return false;
+    if (this.client.status === 'ready') return true;
+    if (!this.connectPromise) {
+      this.connectPromise = this.client
+        .connect()
+        .then(() => undefined)
+        .catch((err: Error) => {
+          this.logger.warn(`Redis connect failed: ${err.message}`);
+          throw err;
+        })
+        .finally(() => {
+          this.connectPromise = null;
+        });
+    }
+    try {
+      await this.connectPromise;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
-    if (ttlSeconds) {
-      await this.client.set(key, value, 'EX', ttlSeconds);
-      return;
+  async get(key: string): Promise<string | null> {
+    if (!(await this.ensureConnected())) return null;
+    try {
+      return await this.client.get(key);
+    } catch (err) {
+      this.logger.warn(`Redis GET failed: ${(err as Error).message}`);
+      return null;
     }
-    await this.client.set(key, value);
+  }
+
+  async set(key: string, value: string, ttlSeconds?: number): Promise<boolean> {
+    if (!(await this.ensureConnected())) return false;
+    try {
+      if (ttlSeconds) {
+        await this.client.set(key, value, 'EX', ttlSeconds);
+      } else {
+        await this.client.set(key, value);
+      }
+      return true;
+    } catch (err) {
+      this.logger.warn(`Redis SET failed: ${(err as Error).message}`);
+      return false;
+    }
   }
 
   async del(key: string): Promise<void> {
-    await this.client.del(key);
+    if (!(await this.ensureConnected())) return;
+    try {
+      await this.client.del(key);
+    } catch (err) {
+      this.logger.warn(`Redis DEL failed: ${(err as Error).message}`);
+    }
+  }
+
+  async sAdd(key: string, member: string): Promise<void> {
+    if (!(await this.ensureConnected())) return;
+    try {
+      await this.client.sadd(key, member);
+    } catch (err) {
+      this.logger.warn(`Redis SADD failed: ${(err as Error).message}`);
+    }
+  }
+
+  async sRem(key: string, member: string): Promise<void> {
+    if (!(await this.ensureConnected())) return;
+    try {
+      await this.client.srem(key, member);
+    } catch (err) {
+      this.logger.warn(`Redis SREM failed: ${(err as Error).message}`);
+    }
+  }
+
+  async sMembers(key: string): Promise<string[]> {
+    if (!(await this.ensureConnected())) return [];
+    try {
+      return await this.client.smembers(key);
+    } catch (err) {
+      this.logger.warn(`Redis SMEMBERS failed: ${(err as Error).message}`);
+      return [];
+    }
   }
 }
