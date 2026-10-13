@@ -11,6 +11,7 @@ import { JourneyModule } from './journey/journey.module';
 import { ParentModule } from './parent/parent.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { ReportsModule } from './reports/reports.module';
 import { StorageModule } from './storage/storage.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { StudentsModule } from './students/students.module';
@@ -31,6 +32,7 @@ import { TutorsModule } from './tutors/tutors.module';
     SessionsModule,
     AttendanceModule,
     JourneyModule,
+    ReportsModule,
     ParentModule,
   ],
   controllers: [AppController],

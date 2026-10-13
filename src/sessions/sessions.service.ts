@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  Prisma,
   SessionMode,
   SessionStatus,
   UserRole,
@@ -12,6 +13,13 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
+
+type TutorListFilters = {
+  from?: string;
+  to?: string;
+  status?: SessionStatus;
+  studentId?: string;
+};
 
 const sessionInclude = {
   tutorProfile: {
@@ -72,7 +80,7 @@ export class SessionsService {
     return sessions.map((session) => this.toPublic(session));
   }
 
-  async listForTutor(userId: string) {
+  async listForTutor(userId: string, filters: TutorListFilters = {}) {
     const profile = await this.prisma.tutorProfile.findUnique({
       where: { userId },
       select: { id: true },
@@ -81,12 +89,123 @@ export class SessionsService {
       throw new NotFoundException('Tutor profile not found.');
     }
 
+    const where: Prisma.SessionWhereInput = {
+      tutorProfileId: profile.id,
+      ...(filters.status ? { status: filters.status } : {}),
+      ...(filters.studentId?.trim()
+        ? { studentId: filters.studentId.trim() }
+        : {}),
+      ...this.dateRangeWhere(filters.from, filters.to),
+    };
+
     const sessions = await this.prisma.session.findMany({
-      where: { tutorProfileId: profile.id },
+      where,
       orderBy: { startsAt: 'asc' },
       include: sessionInclude,
     });
     return sessions.map((session) => this.toPublic(session));
+  }
+
+  async hoursSummaryForTutor(
+    userId: string,
+    filters: Pick<TutorListFilters, 'from' | 'to'> = {},
+  ) {
+    const sessions = await this.listForTutor(userId, {
+      ...filters,
+      status: SessionStatus.COMPLETED,
+    });
+
+    let classMinutes = 0;
+    let travelMinutes = 0;
+    let totalMinutes = 0;
+    let withClassHours = 0;
+
+    for (const session of sessions) {
+      const hours = session.hours;
+      if (hours.classMinutes != null) {
+        classMinutes += hours.classMinutes;
+        withClassHours += 1;
+      }
+      if (hours.travelMinutes != null) {
+        travelMinutes += hours.travelMinutes;
+      }
+      if (hours.totalMinutes != null) {
+        totalMinutes += hours.totalMinutes;
+      }
+    }
+
+    return {
+      from: filters.from ?? null,
+      to: filters.to ?? null,
+      completedSessions: sessions.length,
+      sessionsWithClassHours: withClassHours,
+      totals: {
+        classMinutes,
+        travelMinutes,
+        totalMinutes,
+        classHours: Number((classMinutes / 60).toFixed(2)),
+        travelHours: Number((travelMinutes / 60).toFixed(2)),
+        totalHours: Number((totalMinutes / 60).toFixed(2)),
+      },
+      sessions,
+    };
+  }
+
+  private dateRangeWhere(
+    from?: string,
+    to?: string,
+  ): Prisma.SessionWhereInput {
+    const startsAt: Prisma.DateTimeFilter = {};
+    if (from?.trim()) {
+      const start = new Date(from);
+      if (!Number.isNaN(start.getTime())) {
+        startsAt.gte = start;
+      }
+    }
+    if (to?.trim()) {
+      const end = new Date(to);
+      if (!Number.isNaN(end.getTime())) {
+        // inclusive end-of-day if date-only (YYYY-MM-DD)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(to.trim())) {
+          end.setHours(23, 59, 59, 999);
+        }
+        startsAt.lte = end;
+      }
+    }
+    return Object.keys(startsAt).length > 0 ? { startsAt } : {};
+  }
+
+  private minutesBetween(start: Date | null, end: Date | null) {
+    if (!start || !end) return null;
+    const ms = end.getTime() - start.getTime();
+    if (ms < 0) return null;
+    return Math.round(ms / 60000);
+  }
+
+  private computeHours(journey?: {
+    leftHomeAt: Date | null;
+    reachedAt: Date | null;
+    classStartedAt: Date | null;
+    stoppedAt: Date | null;
+  } | null) {
+    if (!journey) {
+      return {
+        travelMinutes: null as number | null,
+        classMinutes: null as number | null,
+        totalMinutes: null as number | null,
+      };
+    }
+    return {
+      travelMinutes: this.minutesBetween(
+        journey.leftHomeAt,
+        journey.reachedAt,
+      ),
+      classMinutes: this.minutesBetween(
+        journey.classStartedAt,
+        journey.stoppedAt,
+      ),
+      totalMinutes: this.minutesBetween(journey.leftHomeAt, journey.stoppedAt),
+    };
   }
 
   async getOne(id: string) {
@@ -435,6 +554,7 @@ export class SessionsService {
             stoppedAt: session.journey.stoppedAt,
           }
         : null,
+      hours: this.computeHours(session.journey),
     };
   }
 }

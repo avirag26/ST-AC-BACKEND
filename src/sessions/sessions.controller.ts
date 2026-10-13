@@ -9,7 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { SessionMode, UserRole } from '@prisma/client';
+import { SessionMode, SessionStatus, UserRole } from '@prisma/client';
 import type { Request } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -38,10 +38,41 @@ export class SessionsController {
     return this.sessionsService.list(filter);
   }
 
+  @Get('mine/hours')
+  @Roles(UserRole.HOME_TUTOR)
+  hoursMine(
+    @Req() req: AuthRequest,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.sessionsService.hoursSummaryForTutor(req.user.userId, {
+      from,
+      to,
+    });
+  }
+
   @Get('mine')
   @Roles(UserRole.HOME_TUTOR, UserRole.OFFLINE_TUTOR)
-  listMine(@Req() req: AuthRequest) {
-    return this.sessionsService.listForTutor(req.user.userId);
+  listMine(
+    @Req() req: AuthRequest,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('status') status?: string,
+    @Query('studentId') studentId?: string,
+  ) {
+    const normalized = status?.toUpperCase();
+    const statusFilter =
+      normalized === SessionStatus.SCHEDULED ||
+      normalized === SessionStatus.COMPLETED ||
+      normalized === SessionStatus.CANCELLED
+        ? (normalized as SessionStatus)
+        : undefined;
+    return this.sessionsService.listForTutor(req.user.userId, {
+      from,
+      to,
+      status: statusFilter,
+      studentId,
+    });
   }
 
   @Get('tutors')
