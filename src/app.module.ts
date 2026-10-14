@@ -16,6 +16,12 @@ import { StorageModule } from './storage/storage.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { StudentsModule } from './students/students.module';
 import { TutorsModule } from './tutors/tutors.module';
+import { ExamsModule } from './exams/exams.module';
+import { FinanceModule } from './finance/finance.module';
+import { QuizzesModule } from './quizzes/quizzes.module';
+import { ResourcesModule } from './resources/resources.module';
+import { PasswordResetModule } from './auth/password-reset.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -34,6 +40,12 @@ import { TutorsModule } from './tutors/tutors.module';
     JourneyModule,
     ReportsModule,
     ParentModule,
+    ExamsModule,
+    FinanceModule,
+    QuizzesModule,
+    ResourcesModule,
+    PasswordResetModule,
+    ActivityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

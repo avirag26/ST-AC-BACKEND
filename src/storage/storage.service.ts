@@ -47,6 +47,13 @@ export class StorageService {
     return getSignedUrl(this.client, command, { expiresIn });
   }
 
+  async uploadPdf(key: string, body: Buffer): Promise<void> {
+    await this.client.send(new PutObjectCommand({
+      Bucket: this.bucket, Key: key, Body: body, ContentType: 'application/pdf',
+      ContentDisposition: 'attachment',
+    }));
+  }
+
   async getDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,

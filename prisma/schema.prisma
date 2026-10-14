@@ -99,6 +99,8 @@ model TutorProfile {
   salaryStatus  SalaryStatus @default(PENDING)
   batches       Batch[]
   sessions      Session[]
+  exams         Exam[]
+  salaryPayments SalaryPayment[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -145,6 +147,9 @@ model Student {
   batches     BatchStudent[]
   sessions    Session[]
   attendance  Attendance[]
+  examMarks   ExamMark[]
+  fees        Fee[]
+  quizAssignments QuizAssignment[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -280,4 +285,132 @@ model Attendance {
 
   @@unique([sessionId, studentId])
   @@index([studentId])
+}
+
+model Exam {
+  id             String       @id @default(cuid())
+  title          String
+  startsAt       DateTime
+  tutorProfileId String
+  tutorProfile   TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Restrict)
+  subjects       ExamSubject[]
+  marks          ExamMark[]
+  createdAt      DateTime     @default(now())
+  @@index([tutorProfileId, startsAt])
+}
+
+model ExamSubject {
+  id       String @id @default(cuid())
+  examId   String
+  exam     Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  name     String
+  maxMarks Int
+  @@unique([examId, name])
+}
+
+model ExamMark {
+  id        String  @id @default(cuid())
+  examId    String
+  exam      Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  subject   String
+  score     Float?
+  attendance AttendanceStatus?
+  feedback  String?
+  updatedAt DateTime @updatedAt
+  @@unique([examId, studentId, subject])
+  @@index([studentId])
+}
+
+model Fee {
+  id String @id @default(cuid())
+  studentId String
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  title String
+  amount Int
+  currency String @default("INR")
+  dueAt DateTime
+  payments Payment[]
+  createdAt DateTime @default(now())
+  @@index([studentId, dueAt])
+}
+
+model Payment {
+  id String @id @default(cuid())
+  feeId String
+  fee Fee @relation(fields: [feeId], references: [id], onDelete: Restrict)
+  amount Int
+  reference String
+  recordedBy String
+  requestId String @unique
+  createdAt DateTime @default(now())
+  @@index([feeId])
+}
+
+model SalaryPayment {
+  id String @id @default(cuid())
+  tutorProfileId String
+  tutorProfile TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Restrict)
+  period String
+  amount Int
+  currency String @default("INR")
+  reference String
+  recordedBy String
+  createdAt DateTime @default(now())
+  @@unique([tutorProfileId, period])
+}
+
+model Quiz {
+  id String @id @default(cuid())
+  title String
+  createdBy String
+  questions Json
+  dueAt DateTime
+  assignments QuizAssignment[]
+  createdAt DateTime @default(now())
+  @@index([createdBy])
+}
+
+model QuizAssignment {
+  id String @id @default(cuid())
+  quizId String
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  studentId String
+  student Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  answers Int[]
+  score Int?
+  submittedAt DateTime?
+  @@unique([quizId, studentId])
+  @@index([studentId])
+}
+
+model Resource {
+  id String @id @default(cuid())
+  title String
+  subject String
+  className String
+  storageKey String @unique
+  createdBy String
+  createdAt DateTime @default(now())
+  @@index([className, subject])
+}
+
+model OtpToken {
+  email String @id
+  tokenHash String
+  attempts Int @default(0)
+  expiresAt DateTime
+  requestedAt DateTime @default(now())
+  consumedAt DateTime?
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  actorId String
+  action String
+  path String
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+  @@index([actorId])
 }

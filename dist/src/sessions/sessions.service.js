@@ -71,7 +71,7 @@ let SessionsService = class SessionsService {
         });
         return sessions.map((session) => this.toPublic(session));
     }
-    async listForTutor(userId) {
+    async listForTutor(userId, filters = {}) {
         const profile = await this.prisma.tutorProfile.findUnique({
             where: { userId },
             select: { id: true },
@@ -79,12 +79,99 @@ let SessionsService = class SessionsService {
         if (!profile) {
             throw new common_1.NotFoundException('Tutor profile not found.');
         }
+        const where = {
+            tutorProfileId: profile.id,
+            ...(filters.status ? { status: filters.status } : {}),
+            ...(filters.studentId?.trim()
+                ? { studentId: filters.studentId.trim() }
+                : {}),
+            ...this.dateRangeWhere(filters.from, filters.to),
+        };
         const sessions = await this.prisma.session.findMany({
-            where: { tutorProfileId: profile.id },
+            where,
             orderBy: { startsAt: 'asc' },
             include: sessionInclude,
         });
         return sessions.map((session) => this.toPublic(session));
+    }
+    async hoursSummaryForTutor(userId, filters = {}) {
+        const sessions = await this.listForTutor(userId, {
+            ...filters,
+            status: client_1.SessionStatus.COMPLETED,
+        });
+        let classMinutes = 0;
+        let travelMinutes = 0;
+        let totalMinutes = 0;
+        let withClassHours = 0;
+        for (const session of sessions) {
+            const hours = session.hours;
+            if (hours.classMinutes != null) {
+                classMinutes += hours.classMinutes;
+                withClassHours += 1;
+            }
+            if (hours.travelMinutes != null) {
+                travelMinutes += hours.travelMinutes;
+            }
+            if (hours.totalMinutes != null) {
+                totalMinutes += hours.totalMinutes;
+            }
+        }
+        return {
+            from: filters.from ?? null,
+            to: filters.to ?? null,
+            completedSessions: sessions.length,
+            sessionsWithClassHours: withClassHours,
+            totals: {
+                classMinutes,
+                travelMinutes,
+                totalMinutes,
+                classHours: Number((classMinutes / 60).toFixed(2)),
+                travelHours: Number((travelMinutes / 60).toFixed(2)),
+                totalHours: Number((totalMinutes / 60).toFixed(2)),
+            },
+            sessions,
+        };
+    }
+    dateRangeWhere(from, to) {
+        const startsAt = {};
+        if (from?.trim()) {
+            const start = new Date(from);
+            if (!Number.isNaN(start.getTime())) {
+                startsAt.gte = start;
+            }
+        }
+        if (to?.trim()) {
+            const end = new Date(to);
+            if (!Number.isNaN(end.getTime())) {
+                if (/^\d{4}-\d{2}-\d{2}$/.test(to.trim())) {
+                    end.setHours(23, 59, 59, 999);
+                }
+                startsAt.lte = end;
+            }
+        }
+        return Object.keys(startsAt).length > 0 ? { startsAt } : {};
+    }
+    minutesBetween(start, end) {
+        if (!start || !end)
+            return null;
+        const ms = end.getTime() - start.getTime();
+        if (ms < 0)
+            return null;
+        return Math.round(ms / 60000);
+    }
+    computeHours(journey) {
+        if (!journey) {
+            return {
+                travelMinutes: null,
+                classMinutes: null,
+                totalMinutes: null,
+            };
+        }
+        return {
+            travelMinutes: this.minutesBetween(journey.leftHomeAt, journey.reachedAt),
+            classMinutes: this.minutesBetween(journey.classStartedAt, journey.stoppedAt),
+            totalMinutes: this.minutesBetween(journey.leftHomeAt, journey.stoppedAt),
+        };
     }
     async getOne(id) {
         const session = await this.prisma.session.findUnique({
@@ -332,6 +419,7 @@ let SessionsService = class SessionsService {
                     stoppedAt: session.journey.stoppedAt,
                 }
                 : null,
+            hours: this.computeHours(session.journey),
         };
     }
 };

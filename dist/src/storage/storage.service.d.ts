@@ -6,6 +6,7 @@ export declare class StorageService {
     private readonly bucket;
     constructor(config: ConfigService);
     getUploadUrl(key: string, contentType: string, expiresIn?: number): Promise<string>;
+    uploadPdf(key: string, body: Buffer): Promise<void>;
     getDownloadUrl(key: string, expiresIn?: number): Promise<string>;
     deleteObject(key: string): Promise<void>;
 }

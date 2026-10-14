@@ -43,6 +43,12 @@ let StorageService = StorageService_1 = class StorageService {
         });
         return (0, s3_request_presigner_1.getSignedUrl)(this.client, command, { expiresIn });
     }
+    async uploadPdf(key, body) {
+        await this.client.send(new client_s3_1.PutObjectCommand({
+            Bucket: this.bucket, Key: key, Body: body, ContentType: 'application/pdf',
+            ContentDisposition: 'attachment',
+        }));
+    }
     async getDownloadUrl(key, expiresIn = 3600) {
         const command = new client_s3_1.GetObjectCommand({
             Bucket: this.bucket,

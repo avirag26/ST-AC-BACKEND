@@ -33,8 +33,25 @@ let SessionsController = class SessionsController {
             : undefined;
         return this.sessionsService.list(filter);
     }
-    listMine(req) {
-        return this.sessionsService.listForTutor(req.user.userId);
+    hoursMine(req, from, to) {
+        return this.sessionsService.hoursSummaryForTutor(req.user.userId, {
+            from,
+            to,
+        });
+    }
+    listMine(req, from, to, status, studentId) {
+        const normalized = status?.toUpperCase();
+        const statusFilter = normalized === client_1.SessionStatus.SCHEDULED ||
+            normalized === client_1.SessionStatus.COMPLETED ||
+            normalized === client_1.SessionStatus.CANCELLED
+            ? normalized
+            : undefined;
+        return this.sessionsService.listForTutor(req.user.userId, {
+            from,
+            to,
+            status: statusFilter,
+            studentId,
+        });
     }
     listTutors(mode) {
         const normalized = mode?.toUpperCase();
@@ -63,11 +80,25 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SessionsController.prototype, "list", null);
 __decorate([
+    (0, common_1.Get)('mine/hours'),
+    (0, roles_decorator_1.Roles)(client_1.UserRole.HOME_TUTOR),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('from')),
+    __param(2, (0, common_1.Query)('to')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", void 0)
+], SessionsController.prototype, "hoursMine", null);
+__decorate([
     (0, common_1.Get)('mine'),
     (0, roles_decorator_1.Roles)(client_1.UserRole.HOME_TUTOR, client_1.UserRole.OFFLINE_TUTOR),
     __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('from')),
+    __param(2, (0, common_1.Query)('to')),
+    __param(3, (0, common_1.Query)('status')),
+    __param(4, (0, common_1.Query)('studentId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], SessionsController.prototype, "listMine", null);
 __decorate([

@@ -50,8 +50,72 @@ export declare class SessionsController {
             classStartedAt: Date | null;
             stoppedAt: Date | null;
         } | null;
+        hours: {
+            travelMinutes: number | null;
+            classMinutes: number | null;
+            totalMinutes: number | null;
+        };
     }[]>;
-    listMine(req: AuthRequest): Promise<{
+    hoursMine(req: AuthRequest, from?: string, to?: string): Promise<{
+        from: string | null;
+        to: string | null;
+        completedSessions: number;
+        sessionsWithClassHours: number;
+        totals: {
+            classMinutes: number;
+            travelMinutes: number;
+            totalMinutes: number;
+            classHours: number;
+            travelHours: number;
+            totalHours: number;
+        };
+        sessions: {
+            id: string;
+            title: string | null;
+            mode: import("@prisma/client").$Enums.SessionMode;
+            status: import("@prisma/client").$Enums.SessionStatus;
+            subjectName: string | null;
+            startsAt: Date;
+            endsAt: Date;
+            notes: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            tutor: {
+                tutorProfileId: string;
+                userId: string;
+                fullName: string;
+                phone: string | null;
+                role: import("@prisma/client").$Enums.UserRole;
+                status: import("@prisma/client").$Enums.UserStatus;
+            };
+            batch: {
+                id: string;
+                name: string;
+                className: string;
+                studentCount: number;
+            } | null;
+            student: {
+                id: string;
+                fullName: string;
+                className: string | null;
+                parentName: string;
+                parentEmail: string;
+            } | null;
+            journey: {
+                step: string;
+                leftHomeAt: Date | null;
+                reachedAt: Date | null;
+                classStartedAt: Date | null;
+                stoppedAt: Date | null;
+            } | null;
+            hours: {
+                travelMinutes: number | null;
+                classMinutes: number | null;
+                totalMinutes: number | null;
+            };
+        }[];
+    }>;
+    listMine(req: AuthRequest, from?: string, to?: string, status?: string, studentId?: string): Promise<{
         id: string;
         title: string | null;
         mode: import("@prisma/client").$Enums.SessionMode;
@@ -90,6 +154,11 @@ export declare class SessionsController {
             classStartedAt: Date | null;
             stoppedAt: Date | null;
         } | null;
+        hours: {
+            travelMinutes: number | null;
+            classMinutes: number | null;
+            totalMinutes: number | null;
+        };
     }[]>;
     listTutors(mode?: string): Promise<{
         tutorProfileId: string;
@@ -138,6 +207,11 @@ export declare class SessionsController {
             classStartedAt: Date | null;
             stoppedAt: Date | null;
         } | null;
+        hours: {
+            travelMinutes: number | null;
+            classMinutes: number | null;
+            totalMinutes: number | null;
+        };
     }>;
     create(dto: CreateSessionDto): Promise<{
         id: string;
@@ -178,6 +252,11 @@ export declare class SessionsController {
             classStartedAt: Date | null;
             stoppedAt: Date | null;
         } | null;
+        hours: {
+            travelMinutes: number | null;
+            classMinutes: number | null;
+            totalMinutes: number | null;
+        };
     }>;
     update(id: string, dto: UpdateSessionDto): Promise<{
         id: string;
@@ -218,6 +297,11 @@ export declare class SessionsController {
             classStartedAt: Date | null;
             stoppedAt: Date | null;
         } | null;
+        hours: {
+            travelMinutes: number | null;
+            classMinutes: number | null;
+            totalMinutes: number | null;
+        };
     }>;
 }
 export {};

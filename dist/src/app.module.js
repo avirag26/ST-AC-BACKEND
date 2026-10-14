@@ -20,10 +20,17 @@ const journey_module_1 = require("./journey/journey.module");
 const parent_module_1 = require("./parent/parent.module");
 const prisma_module_1 = require("./prisma/prisma.module");
 const redis_module_1 = require("./redis/redis.module");
+const reports_module_1 = require("./reports/reports.module");
 const storage_module_1 = require("./storage/storage.module");
 const sessions_module_1 = require("./sessions/sessions.module");
 const students_module_1 = require("./students/students.module");
 const tutors_module_1 = require("./tutors/tutors.module");
+const exams_module_1 = require("./exams/exams.module");
+const finance_module_1 = require("./finance/finance.module");
+const quizzes_module_1 = require("./quizzes/quizzes.module");
+const resources_module_1 = require("./resources/resources.module");
+const password_reset_module_1 = require("./auth/password-reset.module");
+const activity_module_1 = require("./activity/activity.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -43,7 +50,14 @@ exports.AppModule = AppModule = __decorate([
             sessions_module_1.SessionsModule,
             attendance_module_1.AttendanceModule,
             journey_module_1.JourneyModule,
+            reports_module_1.ReportsModule,
             parent_module_1.ParentModule,
+            exams_module_1.ExamsModule,
+            finance_module_1.FinanceModule,
+            quizzes_module_1.QuizzesModule,
+            resources_module_1.ResourcesModule,
+            password_reset_module_1.PasswordResetModule,
+            activity_module_1.ActivityModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
